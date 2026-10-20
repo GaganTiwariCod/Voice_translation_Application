@@ -1,4 +1,4 @@
-package com.mymobileapp
+﻿package com.aakashpatti.mictranslation
 
 import android.app.Application
 import com.facebook.react.PackageList
@@ -25,3 +25,4 @@ class MainApplication : Application(), ReactApplication {
     loadReactNative(this)
   }
 }
+

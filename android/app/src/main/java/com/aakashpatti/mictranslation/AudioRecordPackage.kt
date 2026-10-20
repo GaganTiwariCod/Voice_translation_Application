@@ -1,4 +1,4 @@
-package com.mymobileapp
+﻿package com.aakashpatti.mictranslation
 
 import android.view.View
 import com.facebook.react.ReactPackage
@@ -20,3 +20,4 @@ class AudioRecordPackage : ReactPackage {
         return emptyList()
     }
 }
+

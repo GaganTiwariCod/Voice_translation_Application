@@ -1,4 +1,4 @@
-package com.mymobileapp
+﻿package com.aakashpatti.mictranslation
 
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
@@ -190,3 +190,4 @@ class TextToSpeechModule(private val reactContext: ReactApplicationContext) :
         tts = null
     }
 }
+

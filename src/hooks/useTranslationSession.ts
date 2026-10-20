@@ -6,7 +6,7 @@ import { SpeechQueue, SpeechItem } from '../queues/speechQueue';
 import { TranscriptItem, TranslationFinalMessage, TranscriptPartialMessage, TranscriptFinalMessage, ErrorMessage } from '../types/protocol';
 
 import { historyStorage, HistoryExchange } from '../services/historyStorage';
-import { ENV } from '../config/env';
+import { ENV, normalizeWsUrl } from '../config/env';
 
 interface UseTranslationSessionOptions {
   serverUrl?: string;
@@ -19,7 +19,10 @@ export function useTranslationSession({
   defaultSourceLanguage = ENV.DEFAULT_SOURCE_LANGUAGE,
   defaultTargetLanguage = ENV.DEFAULT_TARGET_LANGUAGE,
 }: UseTranslationSessionOptions = {}) {
-  const [serverUrl, setServerUrl] = useState<string>(initialServerUrl);
+  const [serverUrl, setServerUrlState] = useState<string>(normalizeWsUrl(initialServerUrl));
+  const setServerUrl = useCallback((url: string) => {
+    setServerUrlState(normalizeWsUrl(url));
+  }, []);
   const [sourceLanguage, setSourceLanguage] = useState<string>(defaultSourceLanguage);
   const [targetLanguage, setTargetLanguage] = useState<string>(defaultTargetLanguage);
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
@@ -205,6 +208,23 @@ export function useTranslationSession({
     setCurrentPartialSource('');
   }, []);
 
+  const clearErrorMessage = useCallback(() => {
+    setErrorMessage(null);
+  }, []);
+
+  const retryConnection = useCallback(async () => {
+    setErrorMessage(null);
+    try {
+      const socket = socketRef.current;
+      if (socket) {
+        socket.disconnect();
+        await socket.connect();
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Unable to connect to server');
+    }
+  }, []);
+
   return {
     sourceLanguage,
     targetLanguage,
@@ -217,6 +237,8 @@ export function useTranslationSession({
     transcripts,
     currentPartialSource,
     errorMessage,
+    clearErrorMessage,
+    retryConnection,
     historyItems,
     isSaveHistoryEnabled,
     toggleSaveHistory,

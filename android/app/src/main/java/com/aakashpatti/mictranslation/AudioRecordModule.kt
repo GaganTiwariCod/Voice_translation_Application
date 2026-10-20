@@ -1,4 +1,4 @@
-package com.mymobileapp
+﻿package com.aakashpatti.mictranslation
 
 import android.annotation.SuppressLint
 import android.media.AudioFormat
@@ -110,3 +110,4 @@ class AudioRecordModule(private val reactContext: ReactApplicationContext) :
         }
     }
 }
+

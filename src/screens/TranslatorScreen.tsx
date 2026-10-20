@@ -14,6 +14,8 @@ import { LanguageSelector } from '../components/LanguageSelector';
 import { ListeningIndicator } from '../components/ListeningIndicator';
 import { TranscriptList } from '../components/TranscriptList';
 import { ChatHistoryModal } from '../components/ChatHistoryModal';
+import { HeadphoneGuideModal } from '../components/HeadphoneGuideModal';
+import { ServerIssueModal } from '../components/ServerIssueModal';
 import { ENV } from '../config/env';
 
 export const TranslatorScreen: React.FC = () => {
@@ -34,6 +36,8 @@ export const TranslatorScreen: React.FC = () => {
     transcripts,
     currentPartialSource,
     errorMessage,
+    clearErrorMessage,
+    retryConnection,
     historyItems,
     isSaveHistoryEnabled,
     toggleSaveHistory,
@@ -46,14 +50,9 @@ export const TranslatorScreen: React.FC = () => {
     stopListening,
   } = useTranslationSession();
 
-  const [showSettings, setShowSettings] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
-  const [customUrl, setCustomUrl] = useState(serverUrl);
-
-  const applyPreset = (preset: string) => {
-    setCustomUrl(preset);
-    setServerUrl(preset);
-  };
+  const [showHeadphoneGuide, setShowHeadphoneGuide] = useState(true);
+  const [showHeadphoneBanner, setShowHeadphoneBanner] = useState(true);
 
   return (
     <View style={styles.safeArea}>
@@ -70,16 +69,22 @@ export const TranslatorScreen: React.FC = () => {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.appTitle}>Live Translator</Text>
+            <Text style={styles.appTitle}>Mic Translation</Text>
             <Text style={styles.appSubtitle}>Real-Time Streaming Translation</Text>
           </View>
           <View style={styles.headerRight}>
+            <TouchableOpacity
+              style={styles.guideHeaderButton}
+              onPress={() => setShowHeadphoneGuide(true)}
+            >
+              <Text style={styles.guideHeaderButtonText}>🎧 Guide</Text>
+            </TouchableOpacity>
             <TouchableOpacity
               style={[styles.audioToggleButton, isAudioEnabled ? styles.audioOnButton : styles.audioOffButton]}
               onPress={toggleAudio}
             >
               <Text style={styles.audioToggleText}>
-                {isAudioEnabled ? '🔊 Audio ON' : '🔇 Audio OFF'}
+                {isAudioEnabled ? '🔊 ON' : '🔇 OFF'}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -87,83 +92,35 @@ export const TranslatorScreen: React.FC = () => {
               onPress={() => setShowHistoryModal(true)}
             >
               <Text style={styles.historyHeaderButtonText}>
-                📜 {historyItems.length > 0 ? `Chat (${historyItems.length})` : 'Chat'}
+                📜 {historyItems.length > 0 ? `${historyItems.length}` : 'Chat'}
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.settingsButton}
-              onPress={() => setShowSettings(!showSettings)}
-            >
-              <Text style={styles.settingsButtonText}>⚙️ {showSettings ? 'Hide' : 'Server'}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Server Host Configuration Drawer */}
-        {showSettings && (
-          <View style={styles.settingsPanel}>
-            <Text style={styles.settingsTitle}>BACKEND SERVER URL</Text>
-            <View style={styles.inputRow}>
-              <TextInput
-                style={styles.urlInput}
-                value={customUrl}
-                onChangeText={setCustomUrl}
-                placeholder="ws://10.0.2.2:5000"
-                placeholderTextColor="#6B7280"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <TouchableOpacity
-                style={styles.applyButton}
-                onPress={() => setServerUrl(customUrl)}
-              >
-                <Text style={styles.applyButtonText}>Set</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.presetRow}>
-              <TouchableOpacity
-                style={[styles.presetButton, serverUrl === ENV.SERVER_PRESETS.LOCALHOST && styles.presetActive]}
-                onPress={() => applyPreset(ENV.SERVER_PRESETS.LOCALHOST)}
-              >
-                <Text style={styles.presetText}>Localhost / ADB</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.presetButton, serverUrl === ENV.SERVER_PRESETS.WIFI && styles.presetActive]}
-                onPress={() => applyPreset(ENV.SERVER_PRESETS.WIFI)}
-              >
-                <Text style={styles.presetText}>Wi-Fi</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.presetButton, serverUrl === ENV.SERVER_PRESETS.EMULATOR && styles.presetActive]}
-                onPress={() => applyPreset(ENV.SERVER_PRESETS.EMULATOR)}
-              >
-                <Text style={styles.presetText}>Emulator</Text>
-              </TouchableOpacity>
-            </View>
+        {/* Headphone Advisory Pop Banner */}
+        {showHeadphoneBanner && (
+          <View style={styles.headphoneBanner}>
+            <TouchableOpacity
+              style={styles.headphoneBannerContent}
+              onPress={() => setShowHeadphoneGuide(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.headphoneBannerIcon}>🎧</Text>
+              <Text style={styles.headphoneBannerText}>
+                Recommended: Use headphones for zero audio echo loop.{' '}
+                <Text style={styles.headphoneBannerLink}>Open Guide →</Text>
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headphoneBannerClose}
+              onPress={() => setShowHeadphoneBanner(false)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.headphoneBannerCloseText}>✕</Text>
+            </TouchableOpacity>
           </View>
         )}
-
-        {/* Error Notification */}
-        {errorMessage ? (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorText}>⚠️ {errorMessage}</Text>
-            <Text style={styles.errorHint}>Current target: {serverUrl}</Text>
-            <View style={styles.errorActionRow}>
-              <TouchableOpacity
-                style={styles.errorActionButton}
-                onPress={() => applyPreset(ENV.SERVER_PRESETS.WIFI)}
-              >
-                <Text style={styles.errorActionText}>🌐 Switch to Wi-Fi ({ENV.SERVER_PRESETS.WIFI})</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.errorActionButton, { marginTop: 4 }]}
-                onPress={() => applyPreset(ENV.SERVER_PRESETS.LOCALHOST)}
-              >
-                <Text style={styles.errorActionText}>🔌 Switch to Localhost / ADB</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : null}
 
         {/* Language Selection */}
         <LanguageSelector
@@ -253,6 +210,20 @@ export const TranslatorScreen: React.FC = () => {
           onToggleSave={toggleSaveHistory}
           onClearHistory={clearChatHistory}
         />
+
+        {/* Headphone Setup Guide Modal */}
+        <HeadphoneGuideModal
+          visible={showHeadphoneGuide}
+          onClose={() => setShowHeadphoneGuide(false)}
+        />
+
+        {/* Server Connection Issue Modal */}
+        <ServerIssueModal
+          visible={!!errorMessage}
+          errorMessage={errorMessage}
+          onRetry={retryConnection}
+          onClose={clearErrorMessage}
+        />
       </View>
     </View>
   );
@@ -287,6 +258,63 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#9CA3AF',
     marginTop: 2,
+  },
+  guideHeaderButton: {
+    backgroundColor: '#1E1B4B',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#6366F1',
+    marginRight: 6,
+  },
+  guideHeaderButtonText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#A5B4FC',
+  },
+  headphoneBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(99, 102, 241, 0.12)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.35)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 10,
+  },
+  headphoneBannerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 8,
+  },
+  headphoneBannerIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  headphoneBannerText: {
+    flex: 1,
+    fontSize: 11.5,
+    color: '#C7D2FE',
+    lineHeight: 16,
+  },
+  headphoneBannerLink: {
+    color: '#818CF8',
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
+  headphoneBannerClose: {
+    padding: 4,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  headphoneBannerCloseText: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    fontWeight: '700',
   },
   historyHeaderButton: {
     backgroundColor: '#1A2234',

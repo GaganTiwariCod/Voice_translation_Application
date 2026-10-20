@@ -1,4 +1,4 @@
-package com.mymobileapp
+﻿package com.aakashpatti.mictranslation
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -46,3 +46,4 @@ class LocalStorageModule(private val reactContext: ReactApplicationContext) :
         }
     }
 }
+
